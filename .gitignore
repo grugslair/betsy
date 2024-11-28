@@ -1,0 +1,9 @@
+target/
+abis/
+*.env*
+test.ipynb
+venv/
+node_modules/
+bindings/
+manifests/*/base/
+database/
