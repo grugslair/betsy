@@ -1,3 +1,4 @@
+use core::num::traits::One;
 use starknet::{
     ContractAddress, get_caller_address, get_contract_address, syscalls::call_contract_syscall,
     SyscallResultTrait
@@ -5,6 +6,12 @@ use starknet::{
 use dojo::{world::WorldStorage, model::{ModelStorage, Model}};
 use betsy::{utils::Cast,};
 use openzeppelin_token::erc20::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
+
+#[derive(Drop, Copy)]
+struct Fee {
+    per_mille: u16,
+    owner: ContractAddress,
+}
 
 #[derive(Drop, Copy, Serde, Introspect)]
 struct Wager {
@@ -90,14 +97,19 @@ impl BetImpl of BetTrait {
     }
 
     fn init_call(ref self: Bet) {
-        let result = call_contract_syscall(
+        let span = call_contract_syscall(
             self.contract, self.init_call.selector, self.init_call.calldata
         )
             .unwrap_syscall();
+        assert(span.len().is_one(), 'Return mut be a single felt');
+        self.game_id = *span[0];
     }
-}
 
-#[generate_trait]
-impl CallImpl of CallTrait {
-    fn call(self: @Call) -> felt252 {}
+
+    fn payout(ref self: Bet, fee_per_mille: u16) {
+        let total = self.wager.amount * 2;
+        let payout = total * (1000 - fee_per_mille).into() / 1000;
+        
+
+    }
 }
