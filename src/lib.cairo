@@ -3,8 +3,9 @@ mod components;
 mod storage;
 mod serde;
 mod bet;
-mod call;
 mod contract;
+mod owner;
+mod example;
 
 #[cfg(test)]
 mod tests {}

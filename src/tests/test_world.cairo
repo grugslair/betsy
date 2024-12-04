@@ -1,29 +1,27 @@
 #[cfg(test)]
 mod tests {
     use dojo_cairo_test::WorldStorageTestTrait;
-use dojo::model::{ModelStorage, ModelValueStorage, ModelStorageTest};
+    use dojo::model::{ModelStorage, ModelValueStorage, ModelStorageTest};
     use dojo::world::WorldStorageTrait;
-    use dojo_cairo_test::{spawn_test_world, NamespaceDef, TestResource, ContractDefTrait, ContractDef};
+    use dojo_cairo_test::{
+        spawn_test_world, NamespaceDef, TestResource, ContractDefTrait, ContractDef
+    };
 
     use dojo_starter::systems::actions::{actions, IActionsDispatcher, IActionsDispatcherTrait};
     use dojo_starter::models::{Position, m_Position, Moves, m_Moves, Direction};
 
     fn namespace_def() -> NamespaceDef {
-        let ndef = NamespaceDef {
+        NamespaceDef {
             namespace: "dojo_starter", resources: [
-                TestResource::Model(m_Position::TEST_CLASS_HASH),
-                TestResource::Model(m_Moves::TEST_CLASS_HASH),
-                TestResource::Event(actions::e_Moved::TEST_CLASS_HASH),
-                TestResource::Contract(actions::TEST_CLASS_HASH)
+                TestResource::Model(m_Bet::TEST_CLASS_HASH),
+                TestResource::Contract(bet::TEST_CLASS_HASH)
             ].span()
-        };
-
-        ndef
+        }
     }
 
     fn contract_defs() -> Span<ContractDef> {
         [
-            ContractDefTrait::new(@"dojo_starter", @"actions")
+            ContractDefTrait::new(@"betsy", @"bet")
                 .with_writer_of([dojo::utils::bytearray_hash(@"dojo_starter")].span())
         ].span()
     }

@@ -1,13 +1,15 @@
-use core::num::traits::One;
+use core::num::traits::{One};
 use starknet::{
     ContractAddress, get_caller_address, get_contract_address, syscalls::call_contract_syscall,
-    SyscallResultTrait
+    SyscallResultTrait, get_block_timestamp,
 };
 use dojo::{world::WorldStorage, model::{ModelStorage, Model}};
-use betsy::{utils::Cast,};
+use betsy::{utils::Cast, owner::{read_fee, read_owner}};
 use openzeppelin_token::erc20::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 
-#[derive(Drop, Copy)]
+const ASSERT_APPROVAL_STRING: felt252 = 'Both parties approval needed';
+
+#[derive(Drop, Copy, Serde, Introspect)]
 struct Fee {
     per_mille: u16,
     owner: ContractAddress,
@@ -33,7 +35,16 @@ enum Status {
     Created,
     Accepted,
     Revoked,
-    Claimed,
+    Released,
+    Claimed: ContractAddress,
+}
+
+#[derive(Drop, Serde, Copy, PartialEq, Introspect)]
+enum ReleaseStatus {
+    #[default]
+    None,
+    MakerApproved,
+    TakerApproved,
 }
 
 #[dojo::model]
@@ -44,48 +55,65 @@ struct Bet {
     maker: ContractAddress,
     taker: ContractAddress,
     wager: Wager,
+    fee: Fee,
+    expiry: u64,
     contract: ContractAddress,
     init_call: Call,
     claim_selector: felt252,
-    expiry: u64,
     game_id: felt252,
     status: Status,
+    release_status: ReleaseStatus,
+}
+
+fn get_fee_amount(fee: u16, wager: u256) -> u256 {
+    (wager * fee.into() / 1000) * 2 // do not simplify to / 500 as the result need to be even
+}
+
+fn get_single_return(
+    contract: ContractAddress, selector: felt252, calldata: Span<felt252>
+) -> felt252 {
+    let span = call_contract_syscall(contract, selector, calldata).unwrap_syscall();
+    assert(span.len().is_one(), 'Return mut be a single felt');
+    *span[0]
 }
 
 #[generate_trait]
 impl BetImpl of BetTrait {
     fn new(
         id: felt252,
-        maker: ContractAddress,
         taker: ContractAddress,
-        wager: Wager,
-        contract: ContractAddress,
-        init_call: Call,
-        claim_selector: felt252,
+        erc20_contract_address: ContractAddress,
+        erc20_amount: u256,
         expiry: u64,
+        contract: ContractAddress,
+        init_call_selector: felt252,
+        init_call_data: Span<felt252>,
+        claim_selector: felt252,
     ) -> Bet {
         Bet {
             id,
-            maker,
+            maker: get_caller_address(),
             taker,
-            wager,
-            contract,
-            init_call,
-            claim_selector,
+            wager: Wager { contract_address: erc20_contract_address, amount: erc20_amount, },
+            fee: Fee { per_mille: read_fee(), owner: read_owner(), },
             expiry,
-            game_id: 0,
+            contract,
+            init_call: Call { selector: init_call_selector, calldata: init_call_data, },
+            claim_selector,
+            game_id: Zeroable::zero(),
             status: Status::Created,
+            release_status: ReleaseStatus::None,
         }
     }
-
-    fn accept(ref self: Bet) {
-        assert!(self.status == Status::Created);
-        self.status = Status::Accepted;
-    }
-
-    fn revoke(ref self: Bet) {
-        assert!(self.status == Status::Created);
-        self.status = Status::Revoked;
+    fn respond(ref self: Bet, status: Status) {
+        assert(get_caller_address() == self.taker, 'Only taker can respond');
+        match self.status {
+            Status::None => { panic!("Bet not created"); },
+            Status::Created => { self.status = status; },
+            Status::Accepted | Status::Revoked | Status::Claimed |
+            Status::Released => { panic!("Response already recorded"); }
+        };
+        assert(self.expiry.is_zero() || self.expiry < get_block_timestamp(), 'Bet expired');
     }
 
     fn collect(ref self: Bet) {
@@ -94,22 +122,89 @@ impl BetImpl of BetTrait {
 
         dispatcher.transfer_from(self.maker, address, self.wager.amount);
         dispatcher.transfer_from(self.taker, address, self.wager.amount);
+        dispatcher.transfer(self.fee.owner, get_fee_amount(self.fee.per_mille, self.wager.amount));
     }
 
     fn init_call(ref self: Bet) {
-        let span = call_contract_syscall(
-            self.contract, self.init_call.selector, self.init_call.calldata
-        )
-            .unwrap_syscall();
-        assert(span.len().is_one(), 'Return mut be a single felt');
-        self.game_id = *span[0];
+        self
+            .game_id =
+                get_single_return(self.contract, self.init_call.selector, self.init_call.calldata);
+    }
+    fn claim_win(ref self: Bet) {
+        let winner_felt252 = get_single_return(
+            self.contract, self.claim_selector, [self.game_id].span()
+        );
+        assert(winner_felt252.is_non_zero(), 'No winner yet');
+        let winner = winner_felt252.try_into().unwrap();
+        assert(winner == self.maker || winner == self.taker, 'Invalid winner');
+
+        match self.status {
+            Status::Claimed | Status::Released => { panic!("Bet already payed out"); },
+            Status::None | Status::Created | Status::Revoked => { panic!("Bet not running"); },
+            Status::Accepted => { self.status = Status::Claimed(winner); }
+        };
+        ERC20ABIDispatcher { contract_address: self.wager.contract_address }
+            .transfer(
+                winner,
+                self.wager.amount * 2 - get_fee_amount(self.fee.per_mille, self.wager.amount)
+            );
     }
 
+    fn assert_release(ref self: Bet) {
+        match self.status {
+            Status::None => { panic!("Bet not created"); },
+            Status::Created | Status::Revoked => { panic!("Bet not accepted"); },
+            Status::Claimed | Status::Released => { panic!("Response already recorded"); },
+            Status::Accepted => {}
+        };
+    }
 
-    fn payout(ref self: Bet, fee_per_mille: u16) {
-        let total = self.wager.amount * 2;
-        let payout = total * (1000 - fee_per_mille).into() / 1000;
-        
+    fn approve_release(ref self: Bet) {
+        self.assert_release();
+        let caller = get_caller_address();
+        assert(self.release_status == ReleaseStatus::None, 'Release already approved');
+        self
+            .release_status =
+                if caller == self.maker {
+                    ReleaseStatus::MakerApproved
+                } else if caller == self.taker {
+                    ReleaseStatus::TakerApproved
+                } else {
+                    panic!("Only maker or taker can approve release")
+                };
+    }
 
+    fn revoke_release(ref self: Bet) {
+        self.assert_release();
+        match self.release_status {
+            ReleaseStatus::None => { panic!("Release not approved"); },
+            ReleaseStatus::MakerApproved => {
+                assert(get_caller_address() == self.maker, ASSERT_APPROVAL_STRING);
+            },
+            ReleaseStatus::TakerApproved => {
+                assert(get_caller_address() == self.taker, ASSERT_APPROVAL_STRING);
+            }
+        };
+        self.release_status = ReleaseStatus::None;
+    }
+
+    fn release_funds(ref self: Bet) {
+        self.assert_release();
+        match self.release_status {
+            ReleaseStatus::None => { panic!("Release not approved"); },
+            ReleaseStatus::MakerApproved => {
+                assert(get_caller_address() == self.taker, ASSERT_APPROVAL_STRING);
+            },
+            ReleaseStatus::TakerApproved => {
+                assert(get_caller_address() == self.maker, ASSERT_APPROVAL_STRING);
+            }
+        };
+
+        self.status = Status::Released;
+        let payout = self.wager.amount - (self.wager.amount * self.fee.per_mille.into() / 1000);
+        let dispatcher = ERC20ABIDispatcher { contract_address: self.wager.contract_address };
+
+        dispatcher.transfer(self.maker, payout);
+        dispatcher.transfer(self.taker, payout);
     }
 }

@@ -7,6 +7,14 @@ use starknet::storage_access::{
 
 use betsy::{utils::Cast, serde::{serialize_inline, deserialize_unwrap}};
 
+fn read_value_from_felt252<T, +TryInto<felt252, T>>(address: felt252) -> T {
+    storage_read_syscall(0, address.try_into().unwrap()).unwrap_syscall().try_into().unwrap()
+}
+
+fn write_value_from_felt252<T, +Into<T, felt252>, +Drop<T>>(address: felt252, value: T) {
+    storage_write_syscall(0, address.try_into().unwrap(), value.into()).unwrap_syscall();
+}
+
 fn read_felt252(address: StorageBaseAddress, offset: u8) -> felt252 {
     let storage_address = storage_address_from_base_and_offset(address, offset);
     storage_read_syscall(0, storage_address).unwrap_syscall()
@@ -19,6 +27,7 @@ fn read_felt252s(address: StorageBaseAddress, start: u8, size: u8) -> Array<felt
     };
     array
 }
+
 
 fn read_value<T, +TryInto<felt252, T>>(address: StorageBaseAddress, offset: u8) -> T {
     let storage_address = storage_address_from_base_and_offset(address, offset);

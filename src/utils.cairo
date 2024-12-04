@@ -16,3 +16,7 @@ impl CastImpl<T, S, +Serde<T>, +Serde<S>, +Drop<T>,> of Cast<T, S> {
 fn get_transaction_hash() -> felt252 {
     get_tx_info().unbox().transaction_hash
 }
+
+fn default_namespace() -> @ByteArray {
+    @"betsy"
+}

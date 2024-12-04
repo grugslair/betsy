@@ -1,0 +1,23 @@
+[world]
+name = "betsy"
+seed = "betsy-0.1.2"
+
+[namespace]
+default = "betsy"
+
+[env]
+rpc_url = "https://api.cartridge.gg/x/starknet/sepolia"
+account_address = "0x058e3B49d870f08C96a02f794C82b5f6C868c074DeaDD6bA04E8d2194723B5bd"
+
+[writers]
+betsy-Bet = ["betsy-bet"]
+betsy-Game = ["betsy-example"]
+betsy-Winner = ["betsy-example"]
+
+[init_call_args]
+betsy-bet = [
+    "0x058e3B49d870f08C96a02f794C82b5f6C868c074DeaDD6bA04E8d2194723B5bd",
+]
+betsy-example = [
+    "0x058e3B49d870f08C96a02f794C82b5f6C868c074DeaDD6bA04E8d2194723B5bd",
+]
