@@ -1,68 +1,156 @@
-![Dojo Starter](./assets/cover.png)
+# StarkNet Bet Contract Interface
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/mark-dark.svg">
-  <img alt="Dojo logo" align="right" width="120" src=".github/mark-light.svg">
-</picture>
-
-<a href="https://twitter.com/dojostarknet">
-<img src="https://img.shields.io/twitter/follow/dojostarknet?style=social"/>
-</a>
-<a href="https://github.com/dojoengine/dojo">
-<img src="https://img.shields.io/github/stars/dojoengine/dojo?style=social"/>
-</a>
-
-[![discord](https://img.shields.io/badge/join-dojo-green?logo=discord&logoColor=white)](https://discord.gg/PwDa2mKhR4)
-[![Telegram Chat][tg-badge]][tg-url]
-
-[tg-badge]: https://img.shields.io/endpoint?color=neon&logo=telegram&label=chat&style=flat-square&url=https%3A%2F%2Ftg.sumanjay.workers.dev%2Fdojoengine
-[tg-url]: https://t.me/dojoengine
-
-# Dojo Starter: Official Guide
-
-A quickstart guide to help you build and deploy your first Dojo provable game.
-
-Read the full tutorial [here](https://dojoengine.org/tutorial/dojo-starter).
-
-## Running Locally
-
-#### Terminal one (Make sure this is running)
-
-```bash
-# Run Katana
-katana --dev --dev.no-fee
-```
-
-#### Terminal two
-
-```bash
-# Build the example
-sozo build
-
-# Inspect the world
-sozo inspect
-
-# Migrate the example
-sozo migrate
-
-# Start Torii
-# Replace <WORLD_ADDRESS> with the address of the deployed world from the previous step
-torii --world <WORLD_ADDRESS> --http.cors_origins "*"
-```
+This Cairo interface, `IBet<T>`, provides a comprehensive framework for managing decentralized betting systems on StarkNet. It includes methods for creating, managing, and settling bets, as well as querying their details. Here's an overview of its structure and functionality:
 
 ---
 
-## Contribution
+## **Interface Overview**
 
-1. **Report a Bug**
+### **Purpose**
 
-    - If you think you have encountered a bug, and we should know about it, feel free to report it [here](https://github.com/dojoengine/dojo-starter/issues) and we will take care of it.
+The `IBet<T>` interface facilitates:
 
-2. **Request a Feature**
+1. Creation and acceptance of bets between two parties.
+2. Execution and resolution of the betting process.
+3. Secure handling of wagers, winnings, and potential errors.
 
-    - You can also request for a feature [here](https://github.com/dojoengine/dojo-starter/issues), and if it's viable, it will be picked for development.
+---
 
-3. **Create a Pull Request**
-    - It can't get better then this, your pull request will be appreciated by the community.
+### **Key Methods**
 
-Happy coding!
+#### **Bet Lifecycle**
+
+1. **`create`**
+
+   - Initiates a new bet with specified terms, participants, and conditions.
+   - Parameters:
+     - `taker`: Address of the other party to the bet.
+     - `erc20_contract_address`: Address of the ERC20 token used as the wager.
+     - `erc20_amount`: Amount of token to be wagered by each party.
+     - `contract`: Address of the contract managing the bet.
+     - `init_call_selector` & `init_call_data`: Function selector and data to initiate the bet.
+     - `claim_selector`: Selector for claiming the bet.
+     - `expiry`: Optional expiration timestamp (0 for none).
+   - Returns: Bet identifier (`felt252`).
+
+2. **`accept`**
+
+   - Accepts a bet by the specified `id`. Only callable by the `taker`.
+
+3. **`reject`**
+
+   - Rejects a bet by the specified `id`. Only callable by the `taker`.
+
+4. **`revoke`**
+   - Cancels a bet by the specified `id`. Only callable by the `maker`.
+
+---
+
+#### **Claiming and Dispute Resolution**
+
+1. **`claim_win`**
+
+   - Claims winnings for a specific bet. Only callable by the winner.
+
+2. **`approve_release`**
+
+   - Approves fund release for a specific bet in case of errors or disputes.
+
+3. **`revoke_release`**
+
+   - Revokes a prior release approval for a specific bet.
+
+4. **`release_funds`**
+   - Releases funds back to both parties after mutual approval.
+
+---
+
+#### **Querying Bet Details**
+
+1. **General Bet Information**
+
+   - `get_bet`: Fetches the full bet struct.
+   - `get_bet_status`: Returns the current status of the bet.
+   - `get_bet_winner`: Fetches the winner's address.
+
+2. **Participant Information**
+
+   - `get_bet_maker`: Fetches the maker's address.
+   - `get_bet_taker`: Fetches the taker's address.
+   - `get_bet_betters`: Fetches both participants' addresses.
+
+3. **Wager Details**
+
+   - `get_bet_wager`: Returns the wager details (ERC20 contract and amount).
+   - `get_bet_fee`: Fetches the fee associated with the bet.
+
+4. **Bet Contract Details**
+
+   - `get_bet_contract`: Fetches the address of the associated contract.
+   - `get_bet_init_call`: Fetches the initialization call details.
+   - `get_bet_init_call_selector` & `get_bet_init_calldata`: Fetch initialization function and data.
+   - `get_bet_claim_selector`: Fetches the claim function
+
+5. **Miscellaneous**
+   - `get_bet_expiry`: Fetches the bet's expiration timestamp.
+   - `get_bet_game_id`: Fetches the unique game ID.
+   - `get_bet_release_status`: Fetches the release status of the funds.
+
+---
+
+### **Supporting Structures**
+
+#### **`Bet`**
+
+A structure encapsulating the full details of a bet, including participants, wager, contract references, and status.
+
+#### **`Wager`**
+
+Details the ERC20 contract address and the amount of tokens wagered.
+
+#### **`Status`**
+
+An enum representing the current state of the bet (e.g., `Pending`, `Accepted`, `Completed`, etc.).
+
+#### **`ReleaseStatus`**
+
+An enum indicating the state of funds release:
+
+- `None`: (Default)
+- `Created`
+- `Accepted`
+- `Canceled`: When revoked or rejected.
+- `Released`: A bet that has been split.
+- `Claimed: ContractAddress`: The winner has claimed the pot (Contract address is the winner).
+
+---
+
+## Caller Contract Interface
+
+The interface required by the contract that is being bet needs two methods, an init function and a function to return the winner
+
+### Init function
+
+     - `init_call_selector` & `init_call_data`: Function selector and data to initiate the bet.
+
+The `init_function` takes in the is called at the `contract` on the `init_call_selector` defined in the create method with the `init_call_data` passed to the function. The function should return a single felt252 with an id for the game.
+
+### Winner function
+
+A read method is also required on the `contract` that takes a single felt252 of the `game_id` returned from the init function and returns a single value of the `ContractAddress` of the winner who should either be the maker or the taker (if not funds can be claimed with the release system).
+
+---
+
+### **Usage Considerations**
+
+- **Permissions**:
+  - The `taker` and `maker` are required to call specific methods based on their roles.
+  - Secure handling of funds and approvals ensures fairness and prevents unauthorized access.
+- **Expiry**:
+  - Optional expiration timestamps allow for time-bound offers.
+- **Error Handling**:
+  - Mechanisms for mutual fund release ensure amicable resolution in case of errors.
+
+---
+
+This interface provides a robust foundation for decentralized betting applications, ensuring fairness, transparency, and efficiency.
