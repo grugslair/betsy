@@ -1,6 +1,6 @@
-# StarkNet Bet Contract Interface
+# Starknet Wagering Contract
 
-This Cairo interface, `IBet<T>`, provides a comprehensive framework for managing decentralized betting systems on StarkNet. It includes methods for creating, managing, and settling bets, as well as querying their details. Here's an overview of its structure and functionality:
+This Cairo interface provides a framework for managing decentralized wagering system on Starknet. It includes methods for creating, managing, and settling bets.
 
 ---
 
