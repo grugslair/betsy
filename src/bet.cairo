@@ -34,7 +34,7 @@ enum Status {
     None,
     Created,
     Accepted,
-    Revoked,
+    Canceled,
     Released,
     Claimed: ContractAddress,
 }
@@ -90,6 +90,8 @@ impl BetImpl of BetTrait {
         init_call_data: Span<felt252>,
         claim_selector: felt252,
     ) -> Bet {
+        let maker = get_caller_address();
+        assert(maker != taker, 'Cannot bet against self');
         Bet {
             id,
             maker: get_caller_address(),
@@ -106,14 +108,28 @@ impl BetImpl of BetTrait {
         }
     }
     fn respond(ref self: Bet, status: Status) {
-        assert(get_caller_address() == self.taker, 'Only taker can respond');
         match self.status {
             Status::None => { panic!("Bet not created"); },
             Status::Created => { self.status = status; },
-            Status::Accepted | Status::Revoked | Status::Claimed |
+            Status::Accepted | Status::Canceled | Status::Claimed |
             Status::Released => { panic!("Response already recorded"); }
         };
         assert(self.expiry.is_zero() || self.expiry < get_block_timestamp(), 'Bet expired');
+    }
+
+    fn accept(ref self: Bet) {
+        assert(get_caller_address() == self.taker, 'Only taker can respond');
+        self.respond(Status::Accepted);
+    }
+
+    fn revoke(ref self: Bet) {
+        assert(get_caller_address() == self.maker, 'Only maker can revoke');
+        self.respond(Status::Canceled);
+    }
+
+    fn reject(ref self: Bet) {
+        assert(get_caller_address() == self.taker, 'Only taker can reject');
+        self.respond(Status::None);
     }
 
     fn collect(ref self: Bet) {
@@ -140,7 +156,7 @@ impl BetImpl of BetTrait {
 
         match self.status {
             Status::Claimed | Status::Released => { panic!("Bet already payed out"); },
-            Status::None | Status::Created | Status::Revoked => { panic!("Bet not running"); },
+            Status::None | Status::Created | Status::Canceled => { panic!("Bet not running"); },
             Status::Accepted => { self.status = Status::Claimed(winner); }
         };
         ERC20ABIDispatcher { contract_address: self.wager.contract_address }
@@ -153,7 +169,7 @@ impl BetImpl of BetTrait {
     fn assert_release(ref self: Bet) {
         match self.status {
             Status::None => { panic!("Bet not created"); },
-            Status::Created | Status::Revoked => { panic!("Bet not accepted"); },
+            Status::Created | Status::Canceled => { panic!("Bet not accepted"); },
             Status::Claimed | Status::Released => { panic!("Response already recorded"); },
             Status::Accepted => {}
         };

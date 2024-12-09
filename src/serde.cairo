@@ -10,3 +10,4 @@ pub fn deserialize_unwrap<T, +Serde<T>>(mut span: Span<felt252>) -> T {
         Option::None => core::panic_with_felt252('Could not deserialize')
     }
 }
+

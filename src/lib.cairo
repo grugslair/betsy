@@ -8,4 +8,6 @@ mod owner;
 mod example;
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    mod test_fee;
+}

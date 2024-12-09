@@ -8,7 +8,7 @@ trait IBet<T> {
         ref self: T,
         taker: ContractAddress, // The address of the taker
         erc20_contract_address: ContractAddress, // The address of the ERC20 payment token
-        erc20_amount: u256, // The amount of the ERC20 payment token
+        erc20_amount: u256, // The amount of the ERC20 payment token for each person
         contract: ContractAddress, // The address of the contract to be called for the bet
         init_call_selector: felt252, // The selector of the function to be called on the contract   
         init_call_data: Span<felt252>, // The data to be passed to start the bet
@@ -16,7 +16,9 @@ trait IBet<T> {
         expiry: u64, // The time when the bet offer expires 0 for None
     ) -> felt252;
     fn accept(ref self: T, id: felt252); // Accept the bet, must be called by the taker
+    fn reject(ref self: T, id: felt252); // Reject the bet, must be called by the taker
     fn revoke(ref self: T, id: felt252); // Revoke the bet, must be called by the maker
+
     fn claim_win(ref self: T, id: felt252); // Claim the win, must be called by the winner
 
     // In the case of an error both parties can agree to revoke the bet and split the wager minus
@@ -153,7 +155,7 @@ mod bet {
         fn accept(ref self: ContractState, id: felt252) {
             let mut world = self.world(default_namespace());
             let mut bet: Bet = world.read_model(id);
-            bet.respond(Status::Accepted);
+            bet.accept();
             bet.init_call();
             bet.collect();
             world.write_model(@bet);
@@ -162,7 +164,14 @@ mod bet {
         fn revoke(ref self: ContractState, id: felt252) {
             let mut world = self.world(default_namespace());
             let mut bet: Bet = world.read_model(id);
-            bet.respond(Status::Revoked);
+            bet.revoke();
+            world.write_model(@bet);
+        }
+
+        fn reject(ref self: ContractState, id: felt252) {
+            let mut world = self.world(default_namespace());
+            let mut bet: Bet = world.read_model(id);
+            bet.reject();
             world.write_model(@bet);
         }
 
