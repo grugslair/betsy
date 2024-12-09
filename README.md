@@ -121,8 +121,6 @@ The interface required by the contract that is being bet needs two methods, an i
 
 ### Init function
 
-     - `init_call_selector` & `init_call_data`: Function selector and data to initiate the bet.
-
 The `init_function` takes in the is called at the `contract` on the `init_call_selector` defined in the create method with the `init_call_data` passed to the function. The function should return a single felt252 with an id for the game.
 
 ### Winner function
