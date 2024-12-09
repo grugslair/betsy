@@ -117,7 +117,7 @@ An enum indicating the state of funds release:
 
 ## Caller Contract Interface
 
-The interface required by the contract that is being bet needs two methods, an init function and a function to return the winner
+The interface required by the contract that is being bet on needs two methods, an init function and a function to return the winner
 
 ### Init function
 
