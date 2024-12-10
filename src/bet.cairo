@@ -122,7 +122,9 @@ impl BetImpl of BetTrait {
     fn init_game(ref self: Bet) {
         assert(get_caller_address() == self.taker, 'Only taker can respond');
         self.respond(Status::Accepted);
-        self.call_game(self.init_selector);
+        if self.init_selector.is_non_zero() {
+            self.call_game(self.init_selector);
+        };
     }
 
     fn revoke(ref self: Bet) {

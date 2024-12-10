@@ -1,5 +1,5 @@
 use starknet::ContractAddress;
-use betsy::bet::{Bet, Wager, Status, Call, ReleaseStatus};
+use betsy::bet::{Bet, Wager, Status, ReleaseStatus};
 
 #[starknet::interface]
 trait IBet<T> {
@@ -42,13 +42,9 @@ trait IBet<T> {
     fn get_bet_contract(
         self: @T, id: felt252
     ) -> ContractAddress; // Get the contract address that the bet points to
-    fn get_bet_init_call(self: @T, id: felt252) -> Call; // Get the call to start the bet
-    fn get_bet_init_call_selector(
+    fn get_bet_init_selector(
         self: @T, id: felt252
     ) -> felt252; // Get the selector of the call to start the bet
-    fn get_bet_init_calldata(
-        self: @T, id: felt252
-    ) -> Span<felt252>; // Get the data of the call to start the bet
     fn get_bet_claim_selector(
         self: @T, id: felt252
     ) -> felt252; // Get the selector of the call to claim the bet
@@ -75,7 +71,7 @@ mod bet {
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
     use dojo::{world::WorldStorage, model::{ModelStorage, Model}};
     use betsy::{
-        bet::{Bet, BetTrait, Wager, Status, Call, ReleaseStatus},
+        bet::{Bet, BetTrait, Wager, Status, ReleaseStatus},
         owner::{read_fee, read_owner, write_fee, write_owner},
         utils::{get_transaction_hash, default_namespace}
     };
@@ -240,18 +236,8 @@ mod bet {
             self.read_bet_member(id, selector!("contract"))
         }
 
-        fn get_bet_init_call(self: @ContractState, id: felt252) -> Call {
-            self.read_bet_member(id, selector!("init_call"))
-        }
-
-        fn get_bet_init_call_selector(self: @ContractState, id: felt252) -> felt252 {
-            let call: Call = self.read_bet_member(id, selector!("init_call"));
-            call.selector
-        }
-
-        fn get_bet_init_calldata(self: @ContractState, id: felt252) -> Span<felt252> {
-            let call: Call = self.read_bet_member(id, selector!("init_call"));
-            call.calldata
+        fn get_bet_init_selector(self: @ContractState, id: felt252) -> felt252 {
+            self.read_bet_member(id, selector!("init_selec"))
         }
 
         fn get_bet_claim_selector(self: @ContractState, id: felt252) -> felt252 {
