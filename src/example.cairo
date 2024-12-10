@@ -27,6 +27,10 @@ mod example {
         winner: ContractAddress
     }
 
+    fn dojo_init(ref self: ContractState, owner: ContractAddress) {
+        write_owner(owner);
+    }
+
     #[abi(embed_v0)]
     impl IExampleImpl of IExample<ContractState> {
         fn create(ref self: ContractState, initiator: ContractAddress,) -> felt252 {
