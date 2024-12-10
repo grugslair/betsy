@@ -10,9 +10,9 @@ trait IBet<T> {
         erc20_contract_address: ContractAddress, // The address of the ERC20 payment token
         erc20_amount: u256, // The amount of the ERC20 payment token for each person
         contract: ContractAddress, // The address of the contract to be called for the bet
-        init_call_selector: felt252, // The selector of the function to be called on the contract   
-        init_call_data: Span<felt252>, // The data to be passed to start the bet
+        init_selector: felt252, // The selector of the function to be called to start the bet on the contract  
         claim_selector: felt252, // The selector of the function to be called to claim the bet
+        game_id: felt252, // The id of the game
         expiry: u64, // The time when the bet offer expires 0 for None
     ) -> felt252;
     fn accept(ref self: T, id: felt252); // Accept the bet, must be called by the taker
@@ -127,9 +127,9 @@ mod bet {
             erc20_contract_address: ContractAddress,
             erc20_amount: u256,
             contract: ContractAddress,
-            init_call_selector: felt252,
-            init_call_data: Span<felt252>,
+            init_selector: felt252,
             claim_selector: felt252,
+            game_id: felt252,
             expiry: u64,
         ) -> felt252 {
             let mut world = self.world(default_namespace());
@@ -144,9 +144,9 @@ mod bet {
                         erc20_amount,
                         expiry,
                         contract,
-                        init_call_selector,
-                        init_call_data,
+                        init_selector,
                         claim_selector,
+                        game_id,
                     )
                 );
             id
@@ -155,8 +155,7 @@ mod bet {
         fn accept(ref self: ContractState, id: felt252) {
             let mut world = self.world(default_namespace());
             let mut bet: Bet = world.read_model(id);
-            bet.accept();
-            bet.init_call();
+            bet.init_game();
             bet.collect();
             world.write_model(@bet);
         }
@@ -182,7 +181,6 @@ mod bet {
             bet.claim_win();
 
             world.write_model(@bet);
-            // TODO
         }
 
         fn approve_release(ref self: ContractState, id: felt252) {

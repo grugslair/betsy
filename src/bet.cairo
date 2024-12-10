@@ -58,23 +58,15 @@ struct Bet {
     fee: Fee,
     expiry: u64,
     contract: ContractAddress,
-    init_call: Call,
-    claim_selector: felt252,
     game_id: felt252,
+    init_selector: felt252,
+    claim_selector: felt252,
     status: Status,
     release_status: ReleaseStatus,
 }
 
 fn get_fee_amount(fee: u16, wager: u256) -> u256 {
     (wager * fee.into() / 1000) * 2 // do not simplify to / 500 as the result need to be even
-}
-
-fn get_single_return(
-    contract: ContractAddress, selector: felt252, calldata: Span<felt252>
-) -> felt252 {
-    let span = call_contract_syscall(contract, selector, calldata).unwrap_syscall();
-    assert(span.len().is_one(), 'Return mut be a single felt');
-    *span[0]
 }
 
 #[generate_trait]
@@ -86,9 +78,9 @@ impl BetImpl of BetTrait {
         erc20_amount: u256,
         expiry: u64,
         contract: ContractAddress,
-        init_call_selector: felt252,
-        init_call_data: Span<felt252>,
+        init_selector: felt252,
         claim_selector: felt252,
+        game_id: felt252,
     ) -> Bet {
         let maker = get_caller_address();
         assert(maker != taker, 'Cannot bet against self');
@@ -100,9 +92,9 @@ impl BetImpl of BetTrait {
             fee: Fee { per_mille: read_fee(), owner: read_owner(), },
             expiry,
             contract,
-            init_call: Call { selector: init_call_selector, calldata: init_call_data, },
+            init_selector: init_selector,
             claim_selector,
-            game_id: Zeroable::zero(),
+            game_id,
             status: Status::Created,
             release_status: ReleaseStatus::None,
         }
@@ -116,10 +108,21 @@ impl BetImpl of BetTrait {
         };
         assert(self.expiry.is_zero() || self.expiry < get_block_timestamp(), 'Bet expired');
     }
+    fn call_game(self: @Bet, selector: felt252) -> Span<felt252> {
+        call_contract_syscall(*self.contract, selector, [*self.game_id].span()).unwrap_syscall()
+    }
+    fn get_winner(self: @Bet) -> ContractAddress {
+        let span = self.call_game(*self.claim_selector);
+        assert(span.len().is_one(), 'Return mut be a single felt');
+        let winner: ContractAddress = (*span[0]).try_into().unwrap();
+        assert(winner == *self.maker || winner == *self.taker, 'Invalid winner');
+        winner
+    }
 
-    fn accept(ref self: Bet) {
+    fn init_game(ref self: Bet) {
         assert(get_caller_address() == self.taker, 'Only taker can respond');
         self.respond(Status::Accepted);
+        self.call_game(self.init_selector);
     }
 
     fn revoke(ref self: Bet) {
@@ -132,33 +135,24 @@ impl BetImpl of BetTrait {
         self.respond(Status::None);
     }
 
-    fn collect(ref self: Bet) {
+    fn collect(self: @Bet) {
         let address = get_contract_address();
-        let dispatcher = ERC20ABIDispatcher { contract_address: self.wager.contract_address };
+        let dispatcher = ERC20ABIDispatcher { contract_address: *self.wager.contract_address };
 
-        dispatcher.transfer_from(self.maker, address, self.wager.amount);
-        dispatcher.transfer_from(self.taker, address, self.wager.amount);
-        dispatcher.transfer(self.fee.owner, get_fee_amount(self.fee.per_mille, self.wager.amount));
-    }
-
-    fn init_call(ref self: Bet) {
-        self
-            .game_id =
-                get_single_return(self.contract, self.init_call.selector, self.init_call.calldata);
+        dispatcher.transfer_from(*self.maker, address, *self.wager.amount);
+        dispatcher.transfer_from(*self.taker, address, *self.wager.amount);
+        dispatcher
+            .transfer(*self.fee.owner, get_fee_amount(*self.fee.per_mille, *self.wager.amount));
     }
     fn claim_win(ref self: Bet) {
-        let winner_felt252 = get_single_return(
-            self.contract, self.claim_selector, [self.game_id].span()
-        );
-        assert(winner_felt252.is_non_zero(), 'No winner yet');
-        let winner = winner_felt252.try_into().unwrap();
-        assert(winner == self.maker || winner == self.taker, 'Invalid winner');
+        let winner = self.get_winner();
 
-        match self.status {
-            Status::Claimed | Status::Released => { panic!("Bet already payed out"); },
-            Status::None | Status::Created | Status::Canceled => { panic!("Bet not running"); },
-            Status::Accepted => { self.status = Status::Claimed(winner); }
+        self.status = match self.status {
+            Status::Claimed | Status::Released => { panic!("Bet already payed out") },
+            Status::None | Status::Created | Status::Canceled => { panic!("Bet not running") },
+            Status::Accepted => { Status::Claimed(winner) }
         };
+
         ERC20ABIDispatcher { contract_address: self.wager.contract_address }
             .transfer(
                 winner,

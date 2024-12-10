@@ -2,17 +2,8 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 trait IExample<T> {
-    fn create(
-        ref self: T,
-        collection_address_a: ContractAddress,
-        collection_address_b: ContractAddress,
-        player_a: ContractAddress,
-        player_b: ContractAddress,
-        token_a_id: u256,
-        token_b_id: u256,
-        attacks_a: Span<(felt252, felt252)>,
-        attacks_b: Span<(felt252, felt252)>
-    ) -> felt252;
+    fn create(ref self: T, initiator: ContractAddress) -> felt252;
+    fn start(self: @T, id: felt252);
     fn set_winner(ref self: T, id: felt252, winner: ContractAddress);
     fn winner(self: @T, id: felt252) -> ContractAddress;
 }
@@ -25,75 +16,55 @@ mod example {
     use super::IExample;
     use betsy::{utils::get_transaction_hash, owner::{read_owner, write_owner}};
 
-    #[dojo::event]
+    #[dojo::model]
     #[derive(Drop, Serde)]
     struct Game {
         #[key]
-        game_id: felt252,
-        collection_address_a: ContractAddress,
-        collection_address_b: ContractAddress,
-        player_a: ContractAddress,
-        player_b: ContractAddress,
-        token_a_id: u256,
-        token_b_id: u256,
-        attacks_a: Span<(felt252, felt252)>,
-        attacks_b: Span<(felt252, felt252)>
-    }
-
-    #[dojo::model]
-    #[derive(Drop, Serde)]
-    struct Winner {
-        #[key]
-        game_id: felt252,
+        id: felt252,
+        owner: ContractAddress,
+        initiator: ContractAddress,
+        initiated: bool,
         winner: ContractAddress
-    }
-
-    fn dojo_init(ref self: ContractState, owner: ContractAddress) {
-        write_owner(owner);
     }
 
     #[abi(embed_v0)]
     impl IExampleImpl of IExample<ContractState> {
-        fn create(
-            ref self: ContractState,
-            collection_address_a: ContractAddress,
-            collection_address_b: ContractAddress,
-            player_a: ContractAddress,
-            player_b: ContractAddress,
-            token_a_id: u256,
-            token_b_id: u256,
-            attacks_a: Span<(felt252, felt252)>,
-            attacks_b: Span<(felt252, felt252)>
-        ) -> felt252 {
-            let game_id = poseidon_hash_span(['example', get_transaction_hash()].span());
+        fn create(ref self: ContractState, initiator: ContractAddress,) -> felt252 {
+            let id = poseidon_hash_span(['example', get_transaction_hash()].span());
             let mut world = self.world(@"betsy");
             world
-                .emit_event(
+                .write_model(
                     @Game {
-                        game_id: poseidon_hash_span(['example', get_transaction_hash()].span()),
-                        collection_address_a,
-                        collection_address_b,
-                        player_a,
-                        player_b,
-                        token_a_id,
-                        token_b_id,
-                        attacks_a,
-                        attacks_b
+                        id,
+                        owner: get_caller_address(),
+                        initiator,
+                        initiated: false,
+                        winner: Zeroable::zero()
                     }
                 );
-            game_id
+            id
+        }
+
+        fn start(self: @ContractState, id: felt252) {
+            let mut world = self.world(@"betsy");
+            let game: Game = world.read_model(id);
+            assert(!game.initiated, 'The game has already started');
+            assert(get_caller_address() == game.initiator, 'Initiator  start the game');
+            world.write_member(Model::<Game>::ptr_from_keys(id), selector!("initiated"), true);
         }
 
         fn set_winner(ref self: ContractState, id: felt252, winner: ContractAddress) {
-            assert(get_caller_address() == read_owner(), 'The owner must set the winner');
             let mut world = self.world(@"betsy");
-            world.write_model(@Winner { game_id: id, winner });
+            assert(
+                get_caller_address() == world
+                    .read_member(Model::<Game>::ptr_from_keys(id), selector!("owner")),
+                'The owner must set the winner'
+            );
+            world.write_member(Model::<Game>::ptr_from_keys(id), selector!("winner"), winner);
         }
 
         fn winner(self: @ContractState, id: felt252) -> ContractAddress {
-            self
-                .world(@"betsy")
-                .read_member(Model::<Winner>::ptr_from_keys(id), selector!("winner"))
+            self.world(@"betsy").read_member(Model::<Game>::ptr_from_keys(id), selector!("winner"))
         }
     }
 }
