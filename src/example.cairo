@@ -14,7 +14,7 @@ mod example {
     use core::poseidon::poseidon_hash_span;
     use dojo::{event::EventStorage, model::{ModelStorage, Model}};
     use super::IExample;
-    use betsy::{utils::get_transaction_hash, owner::{read_owner, write_owner}};
+    use betsy::utils::get_transaction_hash;
 
     #[dojo::model]
     #[derive(Drop, Serde)]

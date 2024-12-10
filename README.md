@@ -41,7 +41,7 @@ This Cairo interface provides a framework for managing decentralized wagering sy
 
 1. **`claim_win`**
 
-   - Claims winnings for a specific bet. Only callable by the winner.
+   - Claims winnings for a specific bet. Callable by anyone but pays out to the winner
 
 2. **`approve_release`**
 

@@ -10,7 +10,7 @@ trait IBet<T> {
         erc20_contract_address: ContractAddress, // The address of the ERC20 payment token
         erc20_amount: u256, // The amount of the ERC20 payment token for each person
         contract: ContractAddress, // The address of the contract to be called for the bet
-        init_selector: felt252, // The selector of the function to be called to start the bet on the contract  
+        init_selector: felt252, // The selector of the function to be called to start the bet on the contract zero if no call. 
         claim_selector: felt252, // The selector of the function to be called to claim the bet
         game_id: felt252, // The id of the game
         expiry: u64, // The time when the bet offer expires 0 for None
@@ -18,8 +18,7 @@ trait IBet<T> {
     fn accept(ref self: T, id: felt252); // Accept the bet, must be called by the taker
     fn reject(ref self: T, id: felt252); // Reject the bet, must be called by the taker
     fn revoke(ref self: T, id: felt252); // Revoke the bet, must be called by the maker
-
-    fn claim_win(ref self: T, id: felt252); // Claim the win, must be called by the winner
+    fn claim_win(ref self: T, id: felt252); // Claim the win, can be called by anyone
 
     // In the case of an error both parties can agree to revoke the bet and split the wager minus
     // the fee
@@ -77,8 +76,9 @@ mod bet {
     };
     use super::{IBet, IBetAdmin};
 
-    fn dojo_init(ref self: ContractState, owner: ContractAddress) {
+    fn dojo_init(ref self: ContractState, owner: ContractAddress, fee_per_mille: u16) {
         write_owner(owner);
+        write_fee(fee_per_mille);
     }
 
     #[generate_trait]
@@ -237,7 +237,7 @@ mod bet {
         }
 
         fn get_bet_init_selector(self: @ContractState, id: felt252) -> felt252 {
-            self.read_bet_member(id, selector!("init_selec"))
+            self.read_bet_member(id, selector!("init_selector"))
         }
 
         fn get_bet_claim_selector(self: @ContractState, id: felt252) -> felt252 {
