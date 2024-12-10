@@ -3,9 +3,9 @@ use starknet::ContractAddress;
 #[starknet::interface]
 trait IExample<T> {
     fn create(ref self: T, initiator: ContractAddress) -> felt252;
-    fn start(self: @T, id: felt252);
+    fn start(ref self: T, id: felt252);
     fn set_winner(ref self: T, id: felt252, winner: ContractAddress);
-    fn winner(self: @T, id: felt252) -> ContractAddress;
+    fn get_winner(self: @T, id: felt252) -> ContractAddress;
 }
 
 #[dojo::contract]
@@ -27,9 +27,6 @@ mod example {
         winner: ContractAddress
     }
 
-    fn dojo_init(ref self: ContractState, owner: ContractAddress) {
-        write_owner(owner);
-    }
 
     #[abi(embed_v0)]
     impl IExampleImpl of IExample<ContractState> {
@@ -49,7 +46,7 @@ mod example {
             id
         }
 
-        fn start(self: @ContractState, id: felt252) {
+        fn start(ref self: ContractState, id: felt252) {
             let mut world = self.world(@"betsy");
             let game: Game = world.read_model(id);
             assert(!game.initiated, 'The game has already started');
@@ -67,7 +64,7 @@ mod example {
             world.write_member(Model::<Game>::ptr_from_keys(id), selector!("winner"), winner);
         }
 
-        fn winner(self: @ContractState, id: felt252) -> ContractAddress {
+        fn get_winner(self: @ContractState, id: felt252) -> ContractAddress {
             self.world(@"betsy").read_member(Model::<Game>::ptr_from_keys(id), selector!("winner"))
         }
     }

@@ -18,8 +18,9 @@ This Cairo interface provides a framework for managing decentralized wagering sy
      - `erc20_contract_address`: Address of the ERC20 token used as the wager.
      - `erc20_amount`: Amount of token to be wagered by each party.
      - `contract`: Address of the contract managing the bet.
-     - `init_call_selector` & `init_call_data`: Function selector and data to initiate the bet.
+     - `init_selector` : Function selector initiate the bet.
      - `claim_selector`: Selector for claiming the bet.
+     - `game_id`: The game id to be called in the selectors above.
      - `expiry`: Optional expiration timestamp (0 for none).
    - Returns: Bet identifier (`felt252`).
 
@@ -77,8 +78,7 @@ This Cairo interface provides a framework for managing decentralized wagering sy
 4. **Bet Contract Details**
 
    - `get_bet_contract`: Fetches the address of the associated contract.
-   - `get_bet_init_call`: Fetches the initialization call details.
-   - `get_bet_init_call_selector` & `get_bet_init_calldata`: Fetch initialization function and data.
+   - `get_bet_init_selector`: Fetch initialization selector.
    - `get_bet_claim_selector`: Fetches the claim function
 
 5. **Miscellaneous**
@@ -121,7 +121,7 @@ The interface required by the contract that is being bet on needs two methods, a
 
 ### Init function
 
-The `init_function` takes in the is called at the `contract` on the `init_call_selector` defined in the create method with the `init_call_data` passed to the function. The function should return a single felt252 with an id for the game.
+The `init_function` takes in the is called at the `contract` on the `init_selector` defined in the create method with the `game_id` passed to the function. This function is called when they bet starts to start the process being bet on
 
 ### Winner function
 

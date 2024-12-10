@@ -1,8 +1,8 @@
 {
   "world": {
-    "class_hash": "0x79d9ce84b97bcc2a631996c3100d57966fc2f5b061fb1ec4dfd0040976bcac6",
-    "address": "0x6c92df45831400e387e8718d9a6512fd55fe5e52dea7987c04bedf85abf14b7",
-    "seed": "betsy-0.2.0",
+    "class_hash": "0x45575a88cc5cef1e444c77ce60b7b4c9e73a01cbbe20926d5a4c72a94011410",
+    "address": "0x30358289c9997c6c34f5520977810e22d42584d95fe2e716b0e677147681610",
+    "seed": "betsy-0.2.1",
     "name": "betsy",
     "entrypoints": [
       "uuid",
@@ -92,6 +92,10 @@
           {
             "name": "metadata_uri",
             "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "metadata_hash",
+            "type": "core::felt252"
           }
         ]
       },
@@ -1002,6 +1006,11 @@
             "name": "uri",
             "type": "core::byte_array::ByteArray",
             "kind": "data"
+          },
+          {
+            "name": "hash",
+            "type": "core::felt252",
+            "kind": "data"
           }
         ]
       },
@@ -1243,7 +1252,7 @@
   },
   "contracts": [
     {
-      "address": "0x3201a1b8559e25f9643856d35ba1ba6a660c16100aff803f09b7aa0a23a85fe",
+      "address": "0x5fe82500b3f28c988aad1375093263c580e6a5b3d77bfc3f1276b682be31889",
       "class_hash": "0x291064c74f57e47a353dbede6093cb9f15287f8a6d782db5e234691483aaccb",
       "abi": [
         {
@@ -2057,8 +2066,8 @@
       ]
     },
     {
-      "address": "0x27ec71d568e71030d749ba4c3a8705063844d777821601ba445b6393fbbaca2",
-      "class_hash": "0x44f788835300f4d55d96528a7b453da33402f10814cb8836028ea50cea8eab",
+      "address": "0x75a992cc4e4e4d9833ca0e8edcef55df577731a46115965f66e692386448e62",
+      "class_hash": "0x426f8a9ca388a6e42f9fbeb54dba1969a75230b79edb7892221a3c9b7b55c9b",
       "abi": [
         {
           "type": "impl",
@@ -2111,18 +2120,6 @@
           ]
         },
         {
-          "type": "function",
-          "name": "dojo_init",
-          "inputs": [
-            {
-              "name": "owner",
-              "type": "core::starknet::contract_address::ContractAddress"
-            }
-          ],
-          "outputs": [],
-          "state_mutability": "external"
-        },
-        {
           "type": "impl",
           "name": "IExampleImpl",
           "interface_name": "betsy::example::IExample"
@@ -2157,7 +2154,7 @@
                 }
               ],
               "outputs": [],
-              "state_mutability": "view"
+              "state_mutability": "external"
             },
             {
               "type": "function",
@@ -2177,7 +2174,7 @@
             },
             {
               "type": "function",
-              "name": "winner",
+              "name": "get_winner",
               "inputs": [
                 {
                   "name": "id",
@@ -2192,6 +2189,13 @@
               "state_mutability": "view"
             }
           ]
+        },
+        {
+          "type": "function",
+          "name": "dojo_init",
+          "inputs": [],
+          "outputs": [],
+          "state_mutability": "view"
         },
         {
           "type": "impl",
@@ -2301,14 +2305,12 @@
           ]
         }
       ],
-      "init_calldata": [
-        "0x058e3B49d870f08C96a02f794C82b5f6C868c074DeaDD6bA04E8d2194723B5bd"
-      ],
+      "init_calldata": [],
       "tag": "betsy-example",
       "selector": "0x680536d57b7c6f2d5d12a2b71be0db1266999f2a158038c435150f164bc045f",
       "systems": [
-        "dojo_init",
         "create",
+        "start",
         "set_winner",
         "upgrade"
       ]

@@ -1,6 +1,6 @@
 [world]
 name = "betsy"
-seed = "betsy-0.2.0"
+seed = "betsy-0.2.1"
 
 [namespace]
 default = "betsy"
@@ -15,8 +15,5 @@ betsy-Game = ["betsy-example"]
 
 [init_call_args]
 betsy-bet = [
-    "0x058e3B49d870f08C96a02f794C82b5f6C868c074DeaDD6bA04E8d2194723B5bd",
-]
-betsy-example = [
     "0x058e3B49d870f08C96a02f794C82b5f6C868c074DeaDD6bA04E8d2194723B5bd",
 ]
