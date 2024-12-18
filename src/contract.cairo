@@ -72,13 +72,14 @@ mod bet {
     use betsy::{
         bet::{Bet, BetTrait, Wager, Status, ReleaseStatus},
         owner::{read_fee, read_owner, write_fee, write_owner},
-        utils::{get_transaction_hash, default_namespace}
+        utils::{get_transaction_hash, default_namespace, uuid, uuid_init}
     };
     use super::{IBet, IBetAdmin};
 
     fn dojo_init(ref self: ContractState, owner: ContractAddress, fee_per_mille: u16) {
         write_owner(owner);
         write_fee(fee_per_mille);
+        uuid_init();
     }
 
     #[generate_trait]
@@ -129,7 +130,7 @@ mod bet {
             expiry: u64,
         ) -> felt252 {
             let mut world = self.world(default_namespace());
-            let id = get_transaction_hash();
+            let id = uuid();
 
             world
                 .write_model(

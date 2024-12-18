@@ -2,7 +2,7 @@ use starknet::SyscallResultTrait;
 use starknet::storage_access::{
     storage_base_address_from_felt252, storage_address_from_base,
     storage_address_from_base_and_offset, StorageBaseAddress, storage_write_syscall,
-    storage_read_syscall
+    storage_read_syscall, StorageAddress
 };
 
 use betsy::{utils::Cast, serde::{serialize_inline, deserialize_unwrap}};
@@ -26,6 +26,14 @@ fn read_felt252s(address: StorageBaseAddress, start: u8, size: u8) -> Array<felt
         array.append(read_felt252(address, n));
     };
     array
+}
+
+fn read_felt252_from_storage_address(address: StorageAddress) -> felt252 {
+    storage_read_syscall(0, address).unwrap_syscall()
+}
+
+fn write_felt252_from_storage_address(address: StorageAddress, value: felt252) {
+    storage_write_syscall(0, address, value).unwrap_syscall();
 }
 
 
