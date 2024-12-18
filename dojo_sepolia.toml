@@ -1,17 +1,19 @@
 [world]
 name = "betsy"
-seed = "betsy-0.2.2"
+seed = "blob-arena-0.8.2"
 
 [namespace]
 default = "betsy"
+mapping = { "example" = ["betsy_example_actions", "BetsyExampleGame"] }
 
 [env]
 rpc_url = "https://api.cartridge.gg/x/starknet/sepolia"
 account_address = "0x058e3B49d870f08C96a02f794C82b5f6C868c074DeaDD6bA04E8d2194723B5bd"
 
 [writers]
-betsy-Bet = ["betsy-bet"]
-betsy-Game = ["betsy-example"]
+betsy = ["betsy-bet"]
+example = ["example-betsy_example_actions"]
+
 
 [init_call_args]
 betsy-bet = [

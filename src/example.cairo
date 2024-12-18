@@ -9,7 +9,7 @@ trait IExample<T> {
 }
 
 #[dojo::contract]
-mod example {
+mod betsy_example_actions {
     use starknet::{ContractAddress, get_caller_address};
     use core::poseidon::poseidon_hash_span;
     use dojo::{event::EventStorage, model::{ModelStorage, Model}};
@@ -18,7 +18,7 @@ mod example {
 
     #[dojo::model]
     #[derive(Drop, Serde)]
-    struct Game {
+    struct BetsyExampleGame {
         #[key]
         id: felt252,
         owner: ContractAddress,
@@ -35,7 +35,7 @@ mod example {
             let mut world = self.world(@"betsy");
             world
                 .write_model(
-                    @Game {
+                    @BetsyExampleGame {
                         id,
                         owner: get_caller_address(),
                         initiator,
@@ -48,24 +48,32 @@ mod example {
 
         fn start(ref self: ContractState, id: felt252) {
             let mut world = self.world(@"betsy");
-            let game: Game = world.read_model(id);
+            let game: BetsyExampleGame = world.read_model(id);
             assert(!game.initiated, 'The game has already started');
             assert(get_caller_address() == game.initiator, 'Initiator  start the game');
-            world.write_member(Model::<Game>::ptr_from_keys(id), selector!("initiated"), true);
+            world
+                .write_member(
+                    Model::<BetsyExampleGame>::ptr_from_keys(id), selector!("initiated"), true
+                );
         }
 
         fn set_winner(ref self: ContractState, id: felt252, winner: ContractAddress) {
             let mut world = self.world(@"betsy");
             assert(
                 get_caller_address() == world
-                    .read_member(Model::<Game>::ptr_from_keys(id), selector!("owner")),
+                    .read_member(Model::<BetsyExampleGame>::ptr_from_keys(id), selector!("owner")),
                 'The owner must set the winner'
             );
-            world.write_member(Model::<Game>::ptr_from_keys(id), selector!("winner"), winner);
+            world
+                .write_member(
+                    Model::<BetsyExampleGame>::ptr_from_keys(id), selector!("winner"), winner
+                );
         }
 
         fn get_winner(self: @ContractState, id: felt252) -> ContractAddress {
-            self.world(@"betsy").read_member(Model::<Game>::ptr_from_keys(id), selector!("winner"))
+            self
+                .world(@"betsy")
+                .read_member(Model::<BetsyExampleGame>::ptr_from_keys(id), selector!("winner"))
         }
     }
 }
