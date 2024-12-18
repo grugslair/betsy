@@ -4,7 +4,7 @@ seed = "blob-arena-0.8.2"
 
 [namespace]
 default = "betsy"
-mapping = { "example" = ["betsy_example_actions", "BetsyExampleGame"] }
+mappings = { "example" = ["betsy_example_actions", "BetsyExampleGame"] }
 
 [env]
 rpc_url = "https://api.cartridge.gg/x/starknet/sepolia"

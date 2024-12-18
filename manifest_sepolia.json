@@ -2015,7 +2015,7 @@
       ]
     },
     {
-      "address": "0x320553da408b68c1cc7771941d876ad806822c5b53694fb784275118fc8e054",
+      "address": "0x7c573fe1a28b4b9345f98f1071eebbda6a9d26d304c70f6f6ab3676e36e7ff",
       "class_hash": "0x6a74f10c300b74a6e9130f01d13068b6fefa9362bdce505f233ac394ae7bfb9",
       "abi": [
         {
@@ -2255,8 +2255,8 @@
         }
       ],
       "init_calldata": [],
-      "tag": "betsy-betsy_example_actions",
-      "selector": "0x73413cf6543235b70d8a872f84b2043cb6f6d010474b053e45fe8bb676c1b9",
+      "tag": "example-betsy_example_actions",
+      "selector": "0x47a06eb98a31e6b9936b92ef0db2051cc8221389c9820dffa1dc1c12f6282e",
       "systems": [
         "create",
         "start",
@@ -2275,8 +2275,8 @@
     {
       "members": [],
       "class_hash": "0x3902927264803f3171526573ca363da8ecd624f9d7ceec9e6ef3214133cdc1e",
-      "tag": "betsy-BetsyExampleGame",
-      "selector": "0xc87ea2af34149b0605070f25f6cbadccf14a18f6ed9608988fa2dd169b5fb4"
+      "tag": "example-BetsyExampleGame",
+      "selector": "0x76591c51968fcc588351722e69f18ba1f42d47d4ff655e5878f7717b4dded89"
     }
   ],
   "events": []
