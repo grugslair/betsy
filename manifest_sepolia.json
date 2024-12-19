@@ -1,8 +1,8 @@
 {
   "world": {
     "class_hash": "0x45575a88cc5cef1e444c77ce60b7b4c9e73a01cbbe20926d5a4c72a94011410",
-    "address": "0x14c1a78f1ba33125fe29b857062b4994909812cd2504cdd1fcdec9780a44093",
-    "seed": "blob-arena-0.8.2",
+    "address": "0x1d1cc6530e95a3a49dc35cb7e2607a15c60b2a6c3b86fa3e8bce1d8128d92f3",
+    "seed": "blob-arena-0.8.3",
     "name": "betsy",
     "entrypoints": [
       "uuid",
@@ -1252,7 +1252,7 @@
   },
   "contracts": [
     {
-      "address": "0x419e8fa7fe269149db7b1b4832c327c29b5b6ddf7b8a4991c98934189709e3a",
+      "address": "0x4e8405dce3f44538b9eb1e7b4e849cb659a37c863036a580ac37962e764c65c",
       "class_hash": "0x70324d57e4ee385849f4ba37d4cc11aa0193f62bbdd066af6c62a8acb7ca0e3",
       "abi": [
         {
@@ -2015,7 +2015,7 @@
       ]
     },
     {
-      "address": "0x7c573fe1a28b4b9345f98f1071eebbda6a9d26d304c70f6f6ab3676e36e7ff",
+      "address": "0x36c7e5d33ff8436d9394e6e4f112c0d92916851b814be01e819e6409f8ac264",
       "class_hash": "0x6a74f10c300b74a6e9130f01d13068b6fefa9362bdce505f233ac394ae7bfb9",
       "abi": [
         {
