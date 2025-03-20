@@ -1,8 +1,8 @@
 {
   "world": {
-    "class_hash": "0x45575a88cc5cef1e444c77ce60b7b4c9e73a01cbbe20926d5a4c72a94011410",
-    "address": "0x3bfc46470821d0fd3ba573b2588c1de46102eeed5aa748ca9a695a678d5877c",
-    "seed": "blob-arena-0.8.4",
+    "class_hash": "0x7c9469d45a9cdbab775035afb48e1fa73fb35ab059fcb9dfb0a301aa973e783",
+    "address": "0x5976e0e1c9957cb3161ccfc58d11b3ee3265d39ef125a1aaa6c4607521e87a7",
+    "seed": "blob-arena-0.11.11",
     "name": "betsy",
     "entrypoints": [
       "uuid",
@@ -11,6 +11,7 @@
       "register_event",
       "register_model",
       "register_contract",
+      "register_library",
       "init_contract",
       "upgrade_event",
       "upgrade_model",
@@ -78,6 +79,10 @@
           {
             "name": "Unregistered",
             "type": "()"
+          },
+          {
+            "name": "Library",
+            "type": "(core::starknet::class_hash::ClassHash, core::felt252)"
           }
         ]
       },
@@ -358,6 +363,34 @@
             "outputs": [
               {
                 "type": "core::starknet::contract_address::ContractAddress"
+              }
+            ],
+            "state_mutability": "external"
+          },
+          {
+            "type": "function",
+            "name": "register_library",
+            "inputs": [
+              {
+                "name": "namespace",
+                "type": "core::byte_array::ByteArray"
+              },
+              {
+                "name": "class_hash",
+                "type": "core::starknet::class_hash::ClassHash"
+              },
+              {
+                "name": "name",
+                "type": "core::byte_array::ByteArray"
+              },
+              {
+                "name": "version",
+                "type": "core::byte_array::ByteArray"
+              }
+            ],
+            "outputs": [
+              {
+                "type": "core::starknet::class_hash::ClassHash"
               }
             ],
             "state_mutability": "external"
@@ -967,6 +1000,28 @@
       },
       {
         "type": "event",
+        "name": "dojo::world::world_contract::world::LibraryRegistered",
+        "kind": "struct",
+        "members": [
+          {
+            "name": "name",
+            "type": "core::byte_array::ByteArray",
+            "kind": "key"
+          },
+          {
+            "name": "namespace",
+            "type": "core::byte_array::ByteArray",
+            "kind": "key"
+          },
+          {
+            "name": "class_hash",
+            "type": "core::starknet::class_hash::ClassHash",
+            "kind": "data"
+          }
+        ]
+      },
+      {
+        "type": "event",
         "name": "dojo::world::world_contract::world::EventEmitted",
         "kind": "struct",
         "members": [
@@ -1207,6 +1262,11 @@
             "kind": "nested"
           },
           {
+            "name": "LibraryRegistered",
+            "type": "dojo::world::world_contract::world::LibraryRegistered",
+            "kind": "nested"
+          },
+          {
             "name": "EventEmitted",
             "type": "dojo::world::world_contract::world::EventEmitted",
             "kind": "nested"
@@ -1252,8 +1312,8 @@
   },
   "contracts": [
     {
-      "address": "0x6be1c239793c3427799494b8eb44adbd0e249d466e4e8397ff3402d5da72a23",
-      "class_hash": "0x70324d57e4ee385849f4ba37d4cc11aa0193f62bbdd066af6c62a8acb7ca0e3",
+      "address": "0x220896431692627f8d0caf9ac45e71c3b3d88c7c009acff756ff2081030a2b1",
+      "class_hash": "0x5be4ea2e7d6b7d9bd1f228e203c54ad8b664520491370cc500e689375ffa24b",
       "abi": [
         {
           "type": "impl",
@@ -2015,8 +2075,8 @@
       ]
     },
     {
-      "address": "0x7e33b3e4133d0fc973508cd6642b73b4bf8079cca918240d0a4feaef2265c5c",
-      "class_hash": "0x6a74f10c300b74a6e9130f01d13068b6fefa9362bdce505f233ac394ae7bfb9",
+      "address": "0x6e61d35f2a9e4a9d55196d16a76da7bb53e10a7995feb0b6ecb8178e50ad65e",
+      "class_hash": "0xd9dc5918987d97fa607961e89b700ad52849be95b1304be057dbd2b15a86f3",
       "abi": [
         {
           "type": "impl",
@@ -2265,19 +2325,21 @@
       ]
     }
   ],
+  "libraries": [],
   "models": [
     {
       "members": [],
-      "class_hash": "0x2d03625204bce54b1d08d879abf9bb876d659d1ebccddce42265e48279c71f7",
+      "class_hash": "0x12f2d74ebddfacb4506510f47e4406e7413e55a28b37948e2946fb6501564ce",
       "tag": "betsy-Bet",
       "selector": "0x6a504b637d4bc0128dea575606989fdbb392b3bc6592139e4268259fd9655a7"
     },
     {
       "members": [],
-      "class_hash": "0x3902927264803f3171526573ca363da8ecd624f9d7ceec9e6ef3214133cdc1e",
+      "class_hash": "0x7ab0236f41da8b35dd13f5922fd991229d4a52aae80777cfa982a4daa1449ac",
       "tag": "example-BetsyExampleGame",
       "selector": "0x76591c51968fcc588351722e69f18ba1f42d47d4ff655e5878f7717b4dded89"
     }
   ],
-  "events": []
+  "events": [],
+  "external_contracts": []
 }
