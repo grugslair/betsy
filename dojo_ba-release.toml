@@ -1,0 +1,23 @@
+[world]
+name = "blob_arena-0.12"
+seed = "blob-arena-0.12"
+
+[env]
+rpc_url = "https://api.cartridge.gg/rpc/starknet"
+account_address = "0x049848982e9b089a1f4eb5e1cd12ab58be55feb6937bc9cfcad34c2dfd0a6df8"
+keystore_path = "/home/ben/sn-accounts/0x049848982e9b089a1f4eb5e1cd12ab58be55feb6937bc9cfcad34c2dfd0a6df8-keystore.json"
+
+[namespace]
+default = "betsy"
+mappings = { "example" = ["betsy_example_actions", "BetsyExampleGame"] }
+
+[writers]
+betsy = ["betsy-bet"]
+example = ["example-betsy_example_actions"]
+
+
+[init_call_args]
+betsy-bet = [
+    "0x049848982e9b089A1F4eb5e1cd12aB58bE55Feb6937bc9CfcAD34c2Dfd0a6df8",
+    "0x19",
+]
