@@ -1,6 +1,6 @@
 [world]
 name = "blob_arena-0.12"
-seed = "blob-arena-0.12"
+seed = "blob-arena-0.12.beef"
 
 [namespace]
 default = "betsy"
